@@ -4,6 +4,9 @@ import Login from '../pages/Login';
 import Signup from '../pages/Signup';
 import Dashboard from '../components/Dashboard';
 import IsAuthenticated from './IsAuthenticated';
+import CreatePost from '../components/CreatePost';
+import AllPosts from '../components/AllPosts';
+import MyPosts from '../components/MyPosts';
 
 const MainRoutes = () => {
     return (
@@ -15,11 +18,12 @@ const MainRoutes = () => {
                 <IsAuthenticated>
                     <Dashboard />
                 </IsAuthenticated>
-            } />
-
-            <Route path='/create-post' element={
-            <IsAuthenticated>
-            </IsAuthenticated>} />
+            }>
+                {/* Nested Routes inside Dashboard */}
+                <Route index element={<AllPosts />} />
+                <Route path="create-post" element={<CreatePost />} />
+                <Route path="my-posts" element={<MyPosts />} />
+            </Route>
 
         </Routes>
     )
