@@ -1,0 +1,25 @@
+.songs-holder{
+    width: 60%;
+    padding: 0 3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.songs{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.song{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.play-pause{
+    display: flex;
+    gap: 4px;
+}
+.play-pause > i{
+    font-size: 17px;
+    cursor: pointer;
+}

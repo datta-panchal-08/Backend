@@ -1,0 +1,31 @@
+.mood-element {
+  position: relative; /* canvas ko overlay banane ke liye */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: flex-start;
+  padding: 3rem;
+}
+
+.user-video-feed {
+  width: 20rem;
+  aspect-ratio: 16/9;
+  border-radius: 1rem;
+  object-fit: cover;
+}
+
+.mood-element button{
+    padding: 0.7rem 1rem;
+    background-color: brown;
+    border-radius: 0.5rem;
+    border: none;
+    color: white;
+}
+
+.mood-element canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}
