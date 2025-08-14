@@ -21,6 +21,25 @@
     border-radius: 0.5rem;
     border: none;
     color: white;
+    cursor: pointer;
+}
+
+button:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+.content{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: bold;
+}
+
+.content > small{
+  color: red;
+  font-weight: 500;
+  font-size: 18px;
 }
 
 .mood-element canvas {
@@ -28,4 +47,19 @@
   top: 0;
   left: 0;
   z-index: 10;
+}
+ .song{
+  background-color: wheat;
+  padding: 10px;
+  color: black;
+  border-radius: 10px;
+ }
+
+ .play-pause:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+  background-color: red;
+  border-radius: 50%;
+  padding: 3px 3px;
+  color: white;
 }

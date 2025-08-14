@@ -1,45 +1,50 @@
-import React, { useState } from 'react'
-import './songs.css'
-const SongRecomndations = () => {
-    const [play,setPlay] = useState(false);
-    const [songs, SetSongs] = useState([
-        {
-            title: "test_title",
-            url: "test_url",
-            artist: "test_artist"
-        },
-        {
-            title: "test_title",
-            url: "test_url",
-            artist: "test_artist"
-        },
-        {
-            title: "test_title",
-            url: "test_url",
-            artist: "test_artist"
-        }
-    ])
-    return (
-        <div className='songs-holder'>
-            <h1>Songs Based On Your Mood</h1>
-            <div className="songs">
-                {
-                    songs?.map((s, i) => {
-                        return <div className="song" key={i}>
-                            <div className="left">
-                                <h4>{s.title}</h4>
-                                <h5>{s.artist}</h5>
-                            </div>
-                            <div className="play-pause">
-                                <i class="ri-play-large-line"></i>
-                                <i class="ri-pause-large-line"></i>
-                            </div>
-                        </div>
-                    })
-                }
-            </div>
-        </div>
-    )
-}
+import React, { useState } from "react";
+import "./songs.css";
 
-export default SongRecomndations
+const SongRecomndations = ({ songs }) => {
+  const [playingIndex, setPlayingIndex] = useState(null);
+
+  return (
+    <div className="songs-holder">
+      <h1>Songs Based On Your Mood</h1>
+      <div className="songs">
+        {songs?.map((s, i) => {
+          const isPlaying = playingIndex === i;
+
+          return (
+            <div className="song" key={i}>
+              <div className="left">
+                <h4>{s.title}</h4>
+                <h5>{s.artist}</h5>
+              </div>
+
+              <div className="play-pause">
+                {isPlaying ? (
+                  <i
+                    className="ri-pause-large-line"
+                    onClick={() => setPlayingIndex(null)}
+                  ></i>
+                ) : (
+                  <i
+                    className="ri-play-large-line"
+                    onClick={() => setPlayingIndex(i)}
+                  ></i>
+                )}
+              </div>
+
+              {isPlaying && (
+                <audio
+                  src={s?.audio}
+                  autoPlay
+                  onEnded={() => setPlayingIndex(null)}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+export default SongRecomndations;

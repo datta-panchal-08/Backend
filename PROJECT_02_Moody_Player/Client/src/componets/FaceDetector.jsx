@@ -1,10 +1,12 @@
 import React, { useRef, useEffect } from "react";
+import axios from 'axios';
 import * as faceapi from "face-api.js";
 import "./FaceDetector.css";
+import { useState } from "react";
 
-export default function FaceDetector() {
+export default function FaceDetector({setSongs}) {
   const videoRef = useRef(null);
-
+  const [currentMood,setCurrentMood] = useState(null);
   // Load models on mount
   useEffect(() => {
     const loadModels = async () => {
@@ -28,42 +30,41 @@ export default function FaceDetector() {
     }
   };
 
-  // Detect faces automatically when video starts playing
-  const detectFaces = () => {
+  // Detect mood only once when button is clicked
+  const detectMoodOnce = async () => {
     const video = videoRef.current;
-    const size = { width: video.videoWidth, height: video.videoHeight };
 
-    const canvas = faceapi.createCanvasFromMedia(video);
-    canvas.style.width = video.offsetWidth + "px";
-    canvas.style.height = video.offsetHeight + "px";
-
-    // ✅ Overlay ke liye parent div me append karo, neeche add mat karo
-    video.parentNode.appendChild(canvas);
-
-    faceapi.matchDimensions(canvas, size);
-
-    setInterval(async () => {
-      const detections = await faceapi
-        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
-        .withFaceExpressions();
-
-      const resized = faceapi.resizeResults(detections, size);
-      canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-      faceapi.draw.drawDetections(canvas, resized);
-      faceapi.draw.drawFaceExpressions(canvas, resized);
-    }, 200);
+    const detections = await faceapi
+      .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+      .withFaceExpressions();
+      let mood = undefined;
+    if (detections.length > 0) {
+      const detection = detections[0]; // Sirf pehle face ka mood
+      const expressions = detection.expressions;
+      let mood = Object.keys(expressions).reduce((a, b) =>
+        expressions[a] > expressions[b] ? a : b
+      );
+      console.log("Mood detected:", mood);
+      setCurrentMood(mood);
+      axios.get(`http://localhost:3000/songs?mood=${mood}`)
+      .then((res)=>{
+         setSongs(res?.data?.songs);         
+      });
+    } else {
+      console.log("No face detected",mood);
+      setCurrentMood(mood);
+    }
   };
-
 
   return (
     <div className="mood-element">
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        className="user-video-feed"
-      />
-      <button onClick={detectFaces}>Detect Mood</button>
+      <div className="content">
+        <video ref={videoRef} autoPlay muted className="user-video-feed" />
+        {
+          currentMood !== undefined ? <h3>currentMood : {currentMood}</h3> : <small>no face detected</small> 
+        }
+      </div>
+      <button onClick={detectMoodOnce}>Detect Mood</button>
     </div>
   );
 }
