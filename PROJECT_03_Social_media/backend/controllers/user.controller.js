@@ -14,10 +14,10 @@ export const signup = async (req, res) => {
         }
 
         // checking if the email is already exists in db
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({ username });
         if (existingUser) {
             return res.status(400).json({
-                message: "User already exists!",
+                message: "Username already exists!",
                 success: false
             })
         }
