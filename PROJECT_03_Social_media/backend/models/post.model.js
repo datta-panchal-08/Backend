@@ -19,7 +19,11 @@ const postSchema = new mongoose.Schema({
             type:mongoose.Schema.Types.ObjectId,
             ref:"Comment"
         }
-    ]
+    ],
+    user:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"User"
+    }
 });
 
 export const Post = mongoose.model("Post",postSchema);
