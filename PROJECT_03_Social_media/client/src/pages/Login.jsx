@@ -1,0 +1,96 @@
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { post } from "../api/Endpoint";
+import { toast } from "react-toastify";
+import { useContext, useState } from "react";
+import { UserContext } from "../context/UserContext";
+
+const Login = () => {
+  const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+
+  const { setUser } = useContext(UserContext);
+  const [loading, setLoading] = useState(false);
+
+  const formHandler = async (data) => {
+    setLoading(true);
+    try {
+      const response = await post("/auth/login", data, { withCredentials: true });
+
+      if (response.status === 200) {
+        setUser(response?.data?.user);
+        toast.success(response?.data?.message || "Login Successful");
+        navigate("/");
+      }
+    } catch (error) {
+      const errMsg = error?.response?.data?.message || "Something went wrong";
+      toast.error(errMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="w-screen h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
+      <div className=" w-[90%] sm:w-[25%] bg-gray-900 p-6 rounded-2xl shadow-lg">
+        <h1 className="text-center text-3xl font-bold mb-6">Login</h1>
+
+        <form onSubmit={handleSubmit(formHandler)} className="flex flex-col gap-4">
+
+          {/* Username */}
+          <div>
+            <input
+              {...register("username", { required: "Username is required" })}
+              className="w-full border-b px-2 py-2 bg-transparent outline-none focus:border-purple-500"
+              type="text"
+              placeholder="Username..."
+            />
+            {errors.username && (
+              <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div>
+            <input
+              {...register("password", { required: "Password is required" })}
+              className="w-full border-b px-2 py-2 bg-transparent outline-none focus:border-purple-500"
+              type="password"
+              placeholder="Password..."
+            />
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
+            )}
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={loading}
+            className={`mt-4 px-4 py-2 rounded-lg w-full font-semibold transition ${
+              loading
+                ? "bg-gray-600 cursor-not-allowed"
+                : "bg-purple-600 hover:bg-purple-700"
+            }`}
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
+
+          {/* Signup Link */}
+          <p className="text-center text-sm mt-4">
+            Don’t have an account?{" "}
+            <Link to="/signup" className="font-semibold underline text-purple-400">
+              Signup
+            </Link>
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
