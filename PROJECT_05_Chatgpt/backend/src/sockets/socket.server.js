@@ -37,8 +37,12 @@ export function initSocketServer(httpServer) {
             });
             
             const chatHistory = await messageModel.find({
-               chat:messagePayload.chat
-            });
+               chat: messagePayload.chat
+            })
+               .sort({ createdAt: -1 })   // sabse naya message pehle (newest → oldest)
+               .limit(20)                 // 20 latest messages hi laayega
+               .lean()                    // MongoDB document ko plain JS object banata hai
+               .reverse();                // ab order ulta karke oldest → newest kar diya
 
             const response = await generateAiResponse(
                // Chat History For Ai Model
