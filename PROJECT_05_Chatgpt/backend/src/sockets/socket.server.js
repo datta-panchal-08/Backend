@@ -47,18 +47,19 @@ export function initSocketServer(httpServer) {
          // Listen for "ai-message" event from the client
          socket.on("ai-message", async (messagePayload) => {
 
-            // Save the user's message in the database
-            const userMessage = await messageModel.create({
-               chat: messagePayload.chat,     // which chat this message belongs to
-               user: socket.user._id,         // which user sent the message
-               content: messagePayload.content, // actual message text
-               role: "user"                   // role is "user"
-            });
-
-            // Generate vector (embedding) for the message text
-            const vectors = await generateVectors(messagePayload?.content);
-
-            // Save this vector to memory store with extra details
+            const [userMessage, vectors] = await Promise.all([
+               // Save the user's message in the database
+               messageModel.create({
+                  chat: messagePayload.chat,     // which chat this message belongs to
+                  user: socket.user._id,         // which user sent the message
+                  content: messagePayload.content, // actual message text
+                  role: "user"                   // role is "user"
+               }),
+               // Generate vector (embedding) for the message text
+               generateVectors(messagePayload?.content),
+            ])
+            
+             // Save this vector to memory store with extra details
             await createMemory({
                vectors,
                messageId: userMessage._id,
@@ -69,32 +70,29 @@ export function initSocketServer(httpServer) {
                }
             })
 
-            // Try to find similar past memory (related messages)
-            const memory = await queryMemory({
-               queryVector: vectors,
-               limit: 3,      // only return the closest 3 memory
-               metadata: {
-                  user:socket.user._id
-               }
-            })
+            const [memory, chatHistory] = await Promise.all([
+               queryMemory({
+                  queryVector: vectors,
+                  limit: 3,
+                  metadata: { user: socket.user._id }
+               }),
+               messageModel.find({
+                  chat: messagePayload.chat
+               })
+                  .sort({ createdAt: -1 }) // newest first
+                  .limit(20)
+                  .lean()
+            ]);
 
-            // Get the last 20 messages from this chat
-            let stm = await messageModel.find({
-               chat: messagePayload.chat
-            })
-               .sort({ createdAt: -1 })   // newest message first
-               .limit(20)                 // only get last 20 messages
-               .lean()                    // convert MongoDB docs into plain JS objects
+            // yaha pe reverse kar lo
+            chatHistory.reverse(); // ab oldest → newest
 
-            // Reverse so the order becomes oldest → newest
-            stm = stm.reverse();
 
-            const formatedStm = stm.map((item) => {
+            const stm = chatHistory.map((item) => {
                return {
                   role: item.role,
-                  parts:[{text:item.content}]
+                  parts: [{ text: item.content }]
                }
-
             })
 
             const ltm = [
@@ -112,18 +110,26 @@ export function initSocketServer(httpServer) {
 
             // Ask the AI model to generate a response
             // We send the recent chat history in the correct format
-            const response = await generateAiResponse([...ltm, ...formatedStm]);
+            const response = await generateAiResponse([...ltm, ...stm]);
 
-            // Save the AI's response in the database
-            const aiMessageResponse = await messageModel.create({
-               chat: messagePayload.chat,
-               user: socket.user._id, // storing user ID (but this might be better as "system")
+            // Send the AI's response back to the client in real-time
+            socket.emit("ai-response", {
                content: response,
-               role: "model"          // role is "model" because AI wrote it
+               chat: messagePayload.chat
             });
 
-            // Generate vectors for the AI's response
-            const responseVectors = await generateVectors(response);
+            const [aiMessageResponse, responseVectors] = await Promise.all([
+               // Save the AI's response in the database
+               messageModel.create({
+                  chat: messagePayload.chat,
+                  user: socket.user._id, // storing user ID (but this might be better as "system")
+                  content: response,
+                  role: "model"          // role is "model" because AI wrote it
+               }),
+
+               // Generate vectors for the AI's response
+               generateVectors(response)
+            ])
 
             // Save the AI response vector into memory
             await createMemory({
@@ -135,12 +141,6 @@ export function initSocketServer(httpServer) {
                   text: response
                }
             })
-
-            // Send the AI's response back to the client in real-time
-            socket.emit("ai-response", {
-               content: response,
-               chat: messagePayload.chat
-            });
 
          })
 
